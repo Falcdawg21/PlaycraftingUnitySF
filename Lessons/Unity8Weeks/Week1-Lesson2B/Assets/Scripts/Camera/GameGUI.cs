@@ -1,4 +1,4 @@
-﻿ using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
@@ -14,6 +14,9 @@ using UnityEngine.SceneManagement;
 //are constantly making calls every single frame.
 public class GameGUI : MonoBehaviour
 {
+    [Tooltip ("Every image that shows your health should be here, in left-to-right order. We hide ones when health is missing.")]
+    public Image[] healthImages;
+
     [Tooltip ("Every image that shows your gem count should be here, in left-to-right order. We hide ones when gems are missing.")]
     public Image[] gemImages;
 
@@ -21,6 +24,8 @@ public class GameGUI : MonoBehaviour
     public GameObject wonGUI;
     [Tooltip ("This entire GUI object will be shown when we lose.")]
     public GameObject lostGUI;
+    [Tooltip ("This is the won text.")]
+    public Text wonText;
 
     [Tooltip ("When this Destructible no longer exists, we'll show the lostGUI.")]
     public Destructible player;
@@ -38,7 +43,16 @@ public class GameGUI : MonoBehaviour
         wonGUI.SetActive( DidWinGame() );
 
         //these are pretty inefficient – shouldn't we only update the sprites if something has changed?
+        UpdateHealthImages();
         UpdateGemImages();
+
+        //easter egg!
+        //it's very bad that we use FindPickupCount() so often, since it's very inefficient.
+        if ( DidWinGame() && player.GetComponent<PickupGetter>().FindPickupCount( "easterEgg" ) >= 1 )
+        {
+            //it's also unnecessary to set this text every single time – we could do better
+            wonText.text = "You REALLY won!";
+        }
     }
 
     public bool DidLoseGame()
@@ -54,6 +68,21 @@ public class GameGUI : MonoBehaviour
     public void RestartGame()
     {
         SceneManager.LoadScene( "MainGame" );
+    }
+
+    protected void UpdateHealthImages()
+    {
+        float health = 0.0f;
+        if ( player != null )
+        {
+            health = player.hitPoints;
+        }
+
+        for ( int healthImageIndex = 0; healthImageIndex < healthImages.Length; healthImageIndex++ )
+        {
+            //add one since the array is 0-indexed but our health is 1-indexed
+            healthImages[ healthImageIndex ].gameObject.SetActive( health >= ( healthImageIndex + 1 ) );
+        }
     }
 
     protected void UpdateGemImages()
